@@ -9,7 +9,6 @@ type Service = {
   name_np: string
   icon: string
   base_price: number
-  category: string
 }
 
 export default function Home() {
@@ -17,6 +16,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [city, setCity] = useState('Kathmandu')
+  const [lang, setLang] = useState<'en' | 'np'>('en')
   const router = useRouter()
 
   useEffect(() => {
@@ -39,345 +39,350 @@ export default function Home() {
   }, [])
 
   const handleSearch = () => {
-    if (search.trim()) {
-      router.push(`/browse?search=${encodeURIComponent(search)}&city=${city}`)
-    } else {
-      router.push(`/browse?city=${city}`)
-    }
+    router.push(`/browse?search=${encodeURIComponent(search)}&city=${city}`)
   }
 
-  const handleServiceClick = (serviceName: string) => {
-    router.push(`/browse?search=${encodeURIComponent(serviceName)}&city=${city}`)
+  const handleServiceClick = (name: string) => {
+    router.push(`/browse?search=${encodeURIComponent(name)}&city=${city}`)
   }
 
   return (
-    <main className="min-h-screen bg-white font-sans text-gray-800">
+    <main style={{ fontFamily: "'Segoe UI', sans-serif", color: '#1a1a1a', background: '#fff', minHeight: '100vh' }}>
 
-      {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="text-2xl font-extrabold tracking-tight">
-            <span className="text-emerald-600">KaamSathi</span>
-            <span className="text-gray-400 mx-2">|</span>
-            <span className="text-emerald-700 text-xl">काम साथी</span>
+      {/* ===== NAVBAR ===== */}
+      <nav style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 5%', height: '68px', borderBottom: '1px solid #e8e8e8',
+        position: 'sticky', top: 0, background: '#fff', zIndex: 100,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '38px', height: '38px', background: '#C0392B', borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontWeight: 700, fontSize: '18px'
+          }}>क</div>
+          <div>
+            <div style={{ fontSize: '19px', fontWeight: 700 }}>KaamSathi</div>
+            <div style={{ fontSize: '12px', color: '#666' }}>काम साथी</div>
           </div>
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <a href="#how-it-works" className="text-gray-600 hover:text-emerald-600 transition">How it Works</a>
-            <a href="#services" className="text-gray-600 hover:text-emerald-600 transition">Services</a>
-            <a href="#taskers" className="text-gray-600 hover:text-emerald-600 transition">Top Taskers</a>
-            <a href="/auth" className="text-gray-700 hover:text-emerald-600 transition">Login / साइन इन</a>
-            <a href="/auth" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold">Sign Up Free</a>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '28px', fontSize: '14px' }}>
+          <a href="#how-it-works" style={{ color: '#666', textDecoration: 'none' }}>How it Works</a>
+          <a href="#services" style={{ color: '#666', textDecoration: 'none' }}>Services / सेवाहरू</a>
+          <a href="#taskers" style={{ color: '#666', textDecoration: 'none' }}>Top Taskers</a>
+
+          {/* Language Toggle */}
+          <div
+            style={{ display: 'flex', border: '1px solid #e8e8e8', borderRadius: '20px', overflow: 'hidden', fontSize: '12px', cursor: 'pointer' }}
+            onClick={() => setLang(lang === 'en' ? 'np' : 'en')}
+          >
+            <span style={{ padding: '4px 12px', background: lang === 'en' ? '#C0392B' : 'transparent', color: lang === 'en' ? '#fff' : '#666' }}>EN</span>
+            <span style={{ padding: '4px 12px', background: lang === 'np' ? '#C0392B' : 'transparent', color: lang === 'np' ? '#fff' : '#666' }}>नेप</span>
           </div>
-          {/* Mobile menu */}
-          <div className="flex md:hidden items-center gap-3">
-            <a href="/auth" className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold">Login</a>
-          </div>
+
+          <button
+            onClick={() => router.push('/auth')}
+            style={{ background: 'transparent', border: '1.5px solid #e8e8e8', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+          >
+            Login / साइन इन
+          </button>
+          <button
+            onClick={() => router.push('/auth')}
+            style={{ background: '#C0392B', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+          >
+            Sign Up Free
+          </button>
         </div>
       </nav>
 
-      {/* HERO SECTION */}
-      <section className="relative bg-gradient-to-b from-emerald-50 to-white py-16 sm:py-24">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-            2,400+ verified taskers across Nepal | नेपालभर विश्वसनीय साथीहरू
-          </span>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight">
-            Get Any Task Done — <span className="text-emerald-600">Right Here in Nepal</span>
-          </h1>
-          <p className="text-xl sm:text-2xl text-emerald-700 font-medium mb-2">
-            जुनसुकै काम, नेपालमै गराउनुस् — सजिलो, छिटो, भरपर्दो
-          </p>
-          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-            From home repairs to tutoring, find trusted local taskers in Kathmandu, Pokhara, Chitwan & beyond.
-          </p>
-
-          {/* Search Bar */}
-          <div className="bg-white p-2 rounded-2xl shadow-xl border border-gray-200 max-w-3xl mx-auto flex flex-col sm:flex-row gap-2">
-            <div className="flex items-center px-4 py-3 bg-gray-50 rounded-xl flex-1">
-              <span className="text-gray-400 mr-2 text-lg">📍</span>
-              <select
-                value={city}
-                onChange={e => setCity(e.target.value)}
-                className="bg-transparent w-full outline-none text-gray-700 font-medium cursor-pointer"
-              >
-                <option>Kathmandu</option>
-                <option>Lalitpur</option>
-                <option>Bhaktapur</option>
-                <option>Pokhara</option>
-                <option>Chitwan</option>
-                <option>Butwal</option>
-                <option>Biratnagar</option>
-              </select>
-            </div>
-            <div className="flex items-center px-4 py-3 border-l border-gray-200 flex-[2]">
-              <input
-                type="text"
-                placeholder="Search services / खोज्नुस् (e.g. Plumbing, Cleaning)"
-                className="w-full bg-transparent outline-none text-gray-700"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <button
-              onClick={handleSearch}
-              className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2"
-            >
-              🔍 Find a Tasker
-            </button>
-          </div>
-
-          {/* Hero Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-            <button
-              onClick={() => router.push('/browse')}
-              className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg"
-            >
-              🔍 Browse Taskers
-            </button>
-            <button
-              onClick={() => router.push('/auth')}
-              className="px-8 py-3 bg-white text-emerald-700 font-bold rounded-xl border-2 border-emerald-600 hover:bg-emerald-50 transition"
-            >
-              💼 Become a Tasker
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-            {[
-              { val: '2,400+', label: 'Verified Taskers', np: 'प्रमाणित साथीहरू' },
-              { val: '15,000+', label: 'Tasks Completed', np: 'सम्पन्न कामहरू' },
-              { val: '4.8★', label: 'Average Rating', np: 'औसत मूल्यांकन' },
-              { val: '30 min', label: 'Avg. Match Time', np: 'औसत मिलान समय' }
-            ].map((stat, i) => (
-              <div key={i} className="p-3">
-                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900">{stat.val}</div>
-                <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
-                <div className="text-xs text-gray-400 mt-1">{stat.np}</div>
-              </div>
-            ))}
-          </div>
+      {/* ===== HERO ===== */}
+      <header style={{ background: 'linear-gradient(135deg,#FFF5F5 0%,#FFF0F0 40%,#FFF8F0 100%)', padding: '70px 5% 80px', textAlign: 'center' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px',
+          background: '#fff', border: '1px solid #e8e8e8', borderRadius: '20px',
+          padding: '5px 14px', fontSize: '12px', color: '#666', marginBottom: '24px'
+        }}>
+          <span style={{ color: '#16a34a', fontSize: '11px' }}>●</span>
+          2,400+ verified taskers across Nepal &nbsp;|&nbsp; नेपालभर विश्वसनीय साथीहरू
         </div>
-      </section>
 
-      {/* SERVICES SECTION */}
-      <section id="services" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-gray-900">
-              Popular Services <span className="text-emerald-600 text-2xl font-normal">| लोकप्रिय सेवाहरू</span>
-            </h2>
-            <p className="text-gray-600 mt-2 max-w-xl mx-auto">
-              Browse top service categories trusted by thousands of Nepali households
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-12 text-gray-500 animate-pulse">Loading services...</div>
-          ) : services.length === 0 ? (
-            <div className="text-center py-8 text-red-500 bg-white rounded-xl border border-red-200">
-              No active services found. Please check Supabase.
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {services.map((service) => (
-                <div
-                  key={service.id}
-                  onClick={() => handleServiceClick(service.name_en)}
-                  className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group hover:border-emerald-300"
-                >
-                  <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{service.icon}</div>
-                  <h3 className="font-bold text-gray-800 text-sm sm:text-base">{service.name_en}</h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mb-2">{service.name_np}</p>
-                  <p className="text-xs text-emerald-600 font-semibold bg-emerald-50 inline-block px-2 py-0.5 rounded">
-                    From Rs {service.base_price}/hr
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center mt-8">
-            <button
-              onClick={() => router.push('/browse')}
-              className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition"
-            >
-              View All Services →
-            </button>
-          </div>
+        <h1 style={{ fontSize: 'clamp(28px,5vw,52px)', fontWeight: 800, lineHeight: 1.15, marginBottom: '10px' }}>
+          Get Any Task Done — <span style={{ color: '#C0392B' }}>Right Here in Nepal</span>
+        </h1>
+        <div style={{ fontSize: 'clamp(16px,2.5vw,22px)', color: '#666', marginBottom: '18px', fontWeight: 500 }}>
+          जुनसुकै काम, नेपालमै गराउनुस् — सजिलो, छिटो, भरपर्दो
         </div>
-      </section>
+        <p style={{ fontSize: '16px', color: '#666', maxWidth: '560px', margin: '0 auto 36px' }}>
+          From home repairs to tutoring, find trusted local taskers in Kathmandu, Pokhara, Chitwan & beyond.
+        </p>
 
-      {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            How It Works <span className="text-emerald-600 text-2xl font-normal">| कसरी काम गर्छ</span>
-          </h2>
-          <p className="text-gray-600 mb-10">3 simple steps to get your task done</p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { step: 1, title: 'Post Your Task', np: 'काम पोस्ट गर्नुस्', desc: 'Describe what you need done, where, and when. Free and takes under 2 minutes.' },
-              { step: 2, title: 'Get Matched', np: 'साथी भेट्नुस्', desc: 'Receive offers from nearby verified taskers. Compare profiles, ratings, and prices.' },
-              { step: 3, title: 'Task Done!', np: 'काम सम्पन्न!', desc: 'Your tasker arrives, completes the job, and you pay securely through KaamSathi.' }
-            ].map((item, i) => (
-              <div key={i} className="relative p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-emerald-200 transition">
-                <div className="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">{item.step}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{item.title}</h3>
-                <p className="text-emerald-600 font-medium mb-3 text-sm">{item.np}</p>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
-              </div>
+        {/* Search Bar */}
+        <div style={{
+          display: 'flex', background: '#fff', border: '2px solid #e8e8e8',
+          borderRadius: '14px', maxWidth: '640px', margin: '0 auto 28px',
+          overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+        }}>
+          <input
+            type="text"
+            placeholder="What do you need done? (e.g. Plumber, Cleaner)"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            style={{ flex: 1, border: 'none', outline: 'none', padding: '14px 18px', fontSize: '15px', background: 'transparent' }}
+          />
+          <select
+            value={city}
+            onChange={e => setCity(e.target.value)}
+            style={{ border: 'none', borderLeft: '1px solid #e8e8e8', outline: 'none', padding: '14px', fontSize: '14px', color: '#666', background: '#fff', cursor: 'pointer' }}
+          >
+            {['Kathmandu','Pokhara','Lalitpur','Bhaktapur','Chitwan','Butwal','Biratnagar'].map(c => (
+              <option key={c}>{c}</option>
             ))}
-          </div>
+          </select>
+          <button
+            onClick={handleSearch}
+            style={{ background: '#C0392B', color: '#fff', border: 'none', padding: '14px 24px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Search / खोज्नुस्
+          </button>
+        </div>
+
+        {/* CTA Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '36px' }}>
           <button
             onClick={() => router.push('/browse')}
-            className="mt-10 px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition"
+            style={{ background: '#C0392B', color: '#fff', border: 'none', padding: '13px 28px', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
           >
-            Get Started Now →
+            🔍 Find a Tasker
+          </button>
+          <button
+            onClick={() => router.push('/auth')}
+            style={{ background: '#fff', color: '#1a1a1a', border: '1.5px solid #e8e8e8', padding: '13px 28px', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            💼 Become a Tasker
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', flexWrap: 'wrap' }}>
+          {[
+            { val: '2,400+', label: 'Verified Taskers', np: 'प्रमाणित साथीहरू' },
+            { val: '15,000+', label: 'Tasks Completed', np: 'सम्पन्न कामहरू' },
+            { val: '4.8★', label: 'Average Rating', np: 'औसत मूल्यांकन' },
+            { val: '30 min', label: 'Avg. Match Time', np: 'औसत मिलान समय' }
+          ].map((s, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <strong style={{ display: 'block', fontSize: '22px', fontWeight: 700 }}>{s.val}</strong>
+              <span style={{ fontSize: '12px', color: '#666' }}>{s.label}<br />{s.np}</span>
+            </div>
+          ))}
+        </div>
+      </header>
+
+      {/* ===== SERVICES ===== */}
+      <section id="services" style={{ padding: '60px 5%' }}>
+        <h2 style={{ fontSize: '26px', fontWeight: 700, textAlign: 'center', marginBottom: '6px' }}>
+          Popular Services / लोकप्रिय सेवाहरू
+        </h2>
+        <p style={{ textAlign: 'center', color: '#666', fontSize: '15px', marginBottom: '36px' }}>
+          Browse top service categories trusted by thousands of Nepali households
+        </p>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#666', padding: '40px' }}>Loading services...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: '14px' }}>
+            {services.map(s => (
+              <div
+                key={s.id}
+                onClick={() => handleServiceClick(s.name_en)}
+                style={{
+                  background: '#fff', border: '1.5px solid #e8e8e8', borderRadius: '14px',
+                  padding: '20px 14px', textAlign: 'center', cursor: 'pointer',
+                  transition: 'all .2s'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#C0392B')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '#e8e8e8')}
+              >
+                <div style={{ fontSize: '30px', marginBottom: '10px' }}>{s.icon}</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '2px' }}>{s.name_en}</div>
+                <div style={{ fontSize: '11px', color: '#666' }}>{s.name_np}</div>
+                <div style={{ fontSize: '11px', color: '#C0392B', marginTop: '6px', fontWeight: 600 }}>From Rs {s.base_price}/hr</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ===== HOW IT WORKS ===== */}
+      <section id="how-it-works" style={{ padding: '60px 5%', background: '#f9f9f9' }}>
+        <h2 style={{ fontSize: '26px', fontWeight: 700, textAlign: 'center', marginBottom: '6px' }}>
+          How It Works / कसरी काम गर्छ
+        </h2>
+        <p style={{ textAlign: 'center', color: '#666', marginBottom: '36px' }}>3 simple steps to get your task done</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '24px', maxWidth: '900px', margin: '0 auto' }}>
+          {[
+            { n: 1, title: 'Post Your Task', np: 'काम पोस्ट गर्नुस्', desc: "Describe what you need done, where, and when. It's free and takes under 2 minutes." },
+            { n: 2, title: 'Get Matched', np: 'साथी भेट्नुस्', desc: 'Receive offers from nearby verified taskers. Compare profiles, ratings, and prices.' },
+            { n: 3, title: 'Task Done!', np: 'काम सम्पन्न!', desc: 'Your tasker arrives, completes the job, and you pay securely through KaamSathi.' }
+          ].map((item, i) => (
+            <div key={i} style={{ textAlign: 'center', padding: '28px 20px', background: '#fff', borderRadius: '12px', border: '1px solid #e8e8e8' }}>
+              <div style={{
+                width: '44px', height: '44px', background: '#C0392B', color: '#fff',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '18px', fontWeight: 700, margin: '0 auto 16px'
+              }}>{item.n}</div>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>{item.title}</h3>
+              <div style={{ fontSize: '12px', color: '#C0392B', fontWeight: 600, marginBottom: '8px' }}>{item.np}</div>
+              <p style={{ fontSize: '13px', color: '#666' }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== FEATURED TASKERS ===== */}
+      <section id="taskers" style={{ padding: '60px 5%' }}>
+        <h2 style={{ fontSize: '26px', fontWeight: 700, textAlign: 'center', marginBottom: '36px' }}>
+          Top Rated Taskers / शीर्ष साथीहरू
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '18px' }}>
+          {[
+            { name: 'Ramesh Adhikari', nep: 'रा', city: 'Kathmandu', skills: ['Plumbing','Electrical'], rating: 5.0, tasks: 134, price: 800, bg: '#C0392B', online: true },
+            { name: 'Sunita Tamang', nep: 'सु', city: 'Lalitpur', skills: ['Cleaning','Cooking'], rating: 4.9, tasks: 87, price: 600, bg: '#1a7a4a', online: true },
+            { name: 'Bikash Shrestha', nep: 'बि', city: 'Pokhara', skills: ['Moving','Painting'], rating: 4.8, tasks: 210, price: 700, bg: '#2563EB', online: false },
+            { name: 'Priya Gurung', nep: 'प्र', city: 'Bhaktapur', skills: ['Tutoring','Tech Help'], rating: 4.9, tasks: 56, price: 900, bg: '#7c3aed', online: true },
+          ].map((t, i) => (
+            <div key={i} style={{ background: '#fff', border: '1.5px solid #e8e8e8', borderRadius: '14px', overflow: 'hidden' }}>
+              <div style={{ padding: '18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{
+                  width: '52px', height: '52px', borderRadius: '50%', background: t.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '20px', fontWeight: 700, color: '#fff', flexShrink: 0, position: 'relative'
+                }}>
+                  {t.nep}
+                  <div style={{
+                    position: 'absolute', bottom: '2px', right: '2px',
+                    width: '12px', height: '12px', borderRadius: '50%',
+                    background: t.online ? '#16a34a' : '#ccc', border: '2px solid #fff'
+                  }} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '2px' }}>{t.name}</h4>
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>📍 {t.city}</div>
+                  <div style={{ fontSize: '12px', color: '#f59e0b' }}>
+                    ★★★★★ <strong style={{ color: '#1a1a1a' }}>{t.rating}</strong>
+                    <span style={{ color: '#666' }}> ({t.tasks} reviews)</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ padding: '0 18px 10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {t.skills.map(s => (
+                  <span key={s} style={{ background: '#fdecea', color: '#C0392B', fontSize: '11px', padding: '3px 9px', borderRadius: '10px', fontWeight: 500 }}>{s}</span>
+                ))}
+              </div>
+              <div style={{ padding: '12px 18px', borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '15px', fontWeight: 700, color: '#16a34a' }}>Rs {t.price}/hr</span>
+                <button
+                  onClick={() => router.push('/browse')}
+                  style={{ background: '#C0392B', color: '#fff', border: 'none', padding: '7px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Book Now
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== TRUST ===== */}
+      <section style={{ padding: '60px 5%', background: '#f9f9f9' }}>
+        <h2 style={{ fontSize: '26px', fontWeight: 700, textAlign: 'center', marginBottom: '36px' }}>
+          Why KaamSathi? / किन काम साथी?
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '18px', maxWidth: '900px', margin: '0 auto' }}>
+          {[
+            { icon: '✅', title: 'Verified Taskers / प्रमाणित', desc: 'Every tasker undergoes background checks and ID verification before joining.' },
+            { icon: '💰', title: 'Secure Payments / सुरक्षित भुक्तानी', desc: 'Pay via eSewa, Khalti, or bank transfer. Funds held safely until task is complete.' },
+            { icon: '⭐', title: 'Real Reviews / वास्तविक समीक्षा', desc: 'Honest ratings from real customers across Nepal. No fake reviews, ever.' },
+            { icon: '🛡️', title: 'Task Guarantee / ग्यारेन्टी', desc: "Not satisfied? We'll send another tasker or give you a full refund." }
+          ].map((f, i) => (
+            <div key={i} style={{ textAlign: 'center', padding: '24px 16px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>{f.icon}</div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>{f.title}</h4>
+              <p style={{ fontSize: '13px', color: '#666' }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== CTA ===== */}
+      <section style={{ background: '#C0392B', color: '#fff', padding: '70px 5%', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '30px', fontWeight: 700, marginBottom: '8px' }}>
+          Ready to Get Started? / सुरु गर्न तयार हुनुहुन्छ?
+        </h2>
+        <p style={{ fontSize: '16px', opacity: 0.85, marginBottom: '28px' }}>
+          Join 15,000+ Nepali households who trust KaamSathi for their everyday tasks.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => router.push('/browse')}
+            style={{ background: '#fff', color: '#C0392B', border: 'none', padding: '13px 28px', borderRadius: '10px', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}
+          >
+            🔍 Post a Task — काम पोस्ट गर्नुस्
+          </button>
+          <button
+            onClick={() => router.push('/auth')}
+            style={{ background: 'transparent', color: '#fff', border: '2px solid rgba(255,255,255,.6)', padding: '13px 28px', borderRadius: '10px', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}
+          >
+            💼 Become a Tasker — साथी बन्नुस्
           </button>
         </div>
       </section>
 
-      {/* TOP TASKERS */}
-      <section id="taskers" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">
-            Top Rated Taskers <span className="text-emerald-600 text-2xl font-normal">| शीर्ष साथीहरू</span>
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { name: 'Ramesh Adhikari', init: 'रा', city: 'Kathmandu', rating: '5.0', tasks: 134, skills: ['Plumbing', 'Electrical'], price: 800 },
-              { name: 'Sunita Tamang', init: 'सु', city: 'Lalitpur', rating: '4.9', tasks: 87, skills: ['Cleaning', 'Cooking'], price: 600 },
-              { name: 'Bikash Shrestha', init: 'बि', city: 'Pokhara', rating: '4.8', tasks: 210, skills: ['Moving', 'Painting'], price: 700 },
-              { name: 'Priya Gurung', init: 'प्र', city: 'Bhaktapur', rating: '4.9', tasks: 56, skills: ['Tutoring', 'Tech Help'], price: 900 }
-            ].map((t, i) => (
-              <div key={i} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-emerald-200 transition">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg">{t.init}</div>
-                  <div>
-                    <h4 className="font-bold text-gray-900">{t.name}</h4>
-                    <p className="text-sm text-gray-500">📍 {t.city}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-amber-500 mb-2">
-                  ★★★★★ <span className="text-gray-700 font-semibold">{t.rating}</span>
-                  <span className="text-gray-400">({t.tasks} tasks)</span>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {t.skills.map(s => (
-                    <span key={s} className="px-2 py-1 bg-gray-100 text-xs rounded-full text-gray-600">{s}</span>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <span className="font-bold text-emerald-600">Rs {t.price}/hr</span>
-                  <button
-                    onClick={() => router.push('/browse')}
-                    className="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition"
-                  >
-                    Book Now
-                  </button>
-                </div>
-              </div>
+      {/* ===== FOOTER ===== */}
+      <footer style={{ background: '#1a1a1a', color: '#ccc', padding: '48px 5% 28px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr repeat(3,1fr)', gap: '32px', marginBottom: '36px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '12px' }}>
+              <div style={{ width: '32px', height: '32px', background: '#C0392B', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>क</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>KaamSathi | काम साथी</div>
+            </div>
+            <p style={{ fontSize: '13px', color: '#888', lineHeight: 1.7 }}>
+              Nepal&apos;s trusted platform connecting people with skilled local taskers. Made in Nepal 🇳🇵 by Nepali, for Nepali.
+            </p>
+            <p style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
+              📧 hello@kaamsathi.com.np<br />
+              📞 +977-01-XXXXXXX<br />
+              🏢 Kathmandu, Nepal
+            </p>
+          </div>
+          <div>
+            <h5 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Services</h5>
+            {['Plumbing / प्लम्बिङ','Cleaning / सफाई','Electrical / विद्युत','Moving / सार्ने','All Services →'].map(s => (
+              <button key={s} onClick={() => router.push('/browse')} style={{ display: 'block', fontSize: '13px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '8px', textAlign: 'left', padding: 0 }}>{s}</button>
             ))}
           </div>
-          <div className="text-center mt-8">
-            <button
-              onClick={() => router.push('/browse')}
-              className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition"
-            >
-              View All Taskers →
-            </button>
+          <div>
+            <h5 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Company</h5>
+            {['About Us / हाम्रो बारे','How it Works','Careers / रोजगार','Blog','Press'].map(s => (
+              <button key={s} onClick={() => router.push('/auth')} style={{ display: 'block', fontSize: '13px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '8px', textAlign: 'left', padding: 0 }}>{s}</button>
+            ))}
           </div>
-        </div>
-      </section>
-
-      {/* WHY KAAMSATHI */}
-      <section className="py-16 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">
-            Why KaamSathi? <span className="text-emerald-600 text-2xl font-normal">| किन काम साथी?</span>
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: '✅', title: 'Verified Taskers', np: 'प्रमाणित', desc: 'Every tasker undergoes background checks, ID verification, and skill assessments before joining.' },
-              { icon: '💰', title: 'Secure Payments', np: 'सुरक्षित भुक्तानी', desc: 'Pay via eSewa, Khalti, or bank transfer. Funds are held safely until your task is complete.' },
-              { icon: '⭐', title: 'Real Reviews', np: 'वास्तविक समीक्षा', desc: 'Honest ratings from real customers across Nepal. No fake reviews, ever.' },
-              { icon: '🛡️', title: 'Task Guarantee', np: 'ग्यारेन्टी', desc: "Not satisfied? We'll send another tasker or give you a full refund." }
-            ].map((f, i) => (
-              <div key={i} className="p-5 border border-gray-200 rounded-xl hover:border-emerald-300 hover:shadow-md transition bg-gray-50/50">
-                <div className="text-3xl mb-3">{f.icon}</div>
-                <h3 className="font-bold text-lg text-gray-900">{f.title}</h3>
-                <p className="text-emerald-600 text-sm font-medium mb-2">{f.np}</p>
-                <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
-              </div>
+          <div>
+            <h5 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Support</h5>
+            {['Help Center','Safety / सुरक्षा','Terms of Service','Privacy Policy','Contact Us'].map(s => (
+              <button key={s} onClick={() => router.push('/auth')} style={{ display: 'block', fontSize: '13px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', marginBottom: '8px', textAlign: 'left', padding: 0 }}>{s}</button>
             ))}
           </div>
         </div>
-      </section>
-
-      {/* CTA BANNER */}
-      <section className="py-16 bg-gradient-to-r from-emerald-600 to-green-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-3">
-            Ready to Get Started? <span className="text-emerald-200 text-2xl font-normal">| सुरु गर्न तयार हुनुहुन्छ?</span>
-          </h2>
-          <p className="text-emerald-100 mb-8 text-lg">
-            Join 15,000+ Nepali households who trust KaamSathi for their everyday tasks.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => router.push('/browse')}
-              className="px-8 py-3 bg-white text-emerald-700 font-bold rounded-xl hover:bg-gray-100 transition shadow-lg"
-            >
-              🔍 Post a Task — काम पोस्ट गर्नुस्
-            </button>
-            <button
-              onClick={() => router.push('/auth')}
-              className="px-8 py-3 bg-emerald-700 text-white font-bold rounded-xl border-2 border-white/30 hover:bg-emerald-800 transition"
-            >
-              💼 Become a Tasker — साथी बन्नुस्
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="bg-gray-900 text-gray-300 py-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-8">
-          <div>
-            <div className="text-xl font-bold text-white mb-4">KaamSathi <span className="text-emerald-400">| काम साथी</span></div>
-            <p className="text-sm text-gray-400 leading-relaxed">Nepal&apos;s trusted platform connecting people with skilled local taskers. Made in Nepal 🇳🇵</p>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-3">Services</h4>
-            <ul className="space-y-2 text-sm">
-              <li><button onClick={() => handleServiceClick('Plumbing')} className="hover:text-emerald-400 transition text-left">Plumbing / प्लम्बिङ</button></li>
-              <li><button onClick={() => handleServiceClick('Cleaning')} className="hover:text-emerald-400 transition text-left">Cleaning / सफाई</button></li>
-              <li><button onClick={() => handleServiceClick('Electrical')} className="hover:text-emerald-400 transition text-left">Electrical / विद्युत</button></li>
-              <li><button onClick={() => router.push('/browse')} className="hover:text-emerald-400 transition text-left">All Services →</button></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-3">Company</h4>
-            <ul className="space-y-2 text-sm">
-              <li><button onClick={() => router.push('/auth')} className="hover:text-emerald-400 transition text-left">About Us / हाम्रो बारे</button></li>
-              <li><button onClick={() => router.push('/auth')} className="hover:text-emerald-400 transition text-left">Careers / रोजगार</button></li>
-              <li><button onClick={() => router.push('/auth')} className="hover:text-emerald-400 transition text-left">Contact Us</button></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-3">Contact</h4>
-            <p className="text-sm mb-1">📧 hello@kaamsathi.com.np</p>
-            <p className="text-sm mb-1">📞 +977-01-XXXXXXX</p>
-            <p className="text-sm">🏢 Kathmandu, Nepal</p>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 mt-10 pt-6 border-t border-gray-800 text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} KaamSathi Pvt. Ltd. — Made with ❤ in Nepal 🇳🇵
+        <div style={{ borderTop: '1px solid #333', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', fontSize: '12px', color: '#666' }}>
+          <span>© {new Date().getFullYear()} KaamSathi Pvt. Ltd. — Made with <span style={{ color: '#C0392B' }}>❤</span> in Nepal 🇳🇵</span>
+          <span>काम साथी — नेपालको आफ्नो प्लेटफर्म</span>
         </div>
       </footer>
+
     </main>
   )
 }
