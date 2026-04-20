@@ -21,11 +21,7 @@ export default function AuthPage() {
     }
     setLoading(true)
     setMessage('')
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email
-    })
-    
+    const { error } = await supabase.auth.signInWithOtp({ email })
     if (error) setMessage('❌ ' + error.message)
     else setMessage('✅ Magic link sent! Check your email.')
     setLoading(false)
@@ -39,11 +35,9 @@ export default function AuthPage() {
     }
     setLoading(true)
     setMessage('')
-    
     const { error } = await supabase.auth.signInWithOtp({
       phone: `+977${phone}`
     })
-    
     if (error) setMessage('❌ ' + error.message)
     else {
       setMessage('✅ OTP sent! Check your phone or Supabase logs.')
@@ -56,25 +50,22 @@ export default function AuthPage() {
   const verifyOTP = async () => {
     if (!otp || otp.length !== 6) return setMessage('❌ Enter the 6-digit OTP')
     setLoading(true)
-    
     const { data, error } = await supabase.auth.verifyOtp({
       phone: `+977${phone}`,
       token: otp,
       type: 'sms'
     })
-    
     if (error) {
       setMessage('❌ ' + error.message)
     } else {
       setMessage('✅ Login successful! Saving profile...')
       await supabase.from('users').upsert({
-        id: data.user.id,
+        id: data.user?.id ?? '',
         phone: phone,
         full_name: `User ${phone.slice(-4)}`,
         role: 'customer',
         city: 'Kathmandu'
       }, { onConflict: 'id' })
-      
       setTimeout(() => router.push('/'), 1000)
     }
     setLoading(false)
@@ -91,8 +82,8 @@ export default function AuthPage() {
           <button
             onClick={() => { setLoginMethod('email'); setStep('input'); setMessage('') }}
             className={`flex-1 py-2 rounded-lg font-medium transition ${
-              loginMethod === 'email' 
-                ? 'bg-emerald-600 text-white' 
+              loginMethod === 'email'
+                ? 'bg-emerald-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -101,8 +92,8 @@ export default function AuthPage() {
           <button
             onClick={() => { setLoginMethod('phone'); setStep('input'); setMessage('') }}
             className={`flex-1 py-2 rounded-lg font-medium transition ${
-              loginMethod === 'phone' 
-                ? 'bg-emerald-600 text-white' 
+              loginMethod === 'phone'
+                ? 'bg-emerald-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -170,7 +161,10 @@ export default function AuthPage() {
             >
               {loading ? '⏳ Verifying...' : '✅ Verify OTP / पुष्टि गर्नुहोस्'}
             </button>
-            <button onClick={() => { setStep('input'); setOtp(''); setMessage('') }} className="text-sm text-gray-500 hover:text-emerald-600 w-full text-center">
+            <button
+              onClick={() => { setStep('input'); setOtp(''); setMessage('') }}
+              className="text-sm text-gray-500 hover:text-emerald-600 w-full text-center"
+            >
               ← Change number / नम्बर बदल्नुहोस्
             </button>
           </div>
@@ -186,9 +180,7 @@ export default function AuthPage() {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>By continuing, you agree to our</p>
-          <p>
-            <a href="#" className="text-emerald-600 hover:underline">Terms & Privacy Policy</a>
-          </p>
+          <p><a href="#" className="text-emerald-600 hover:underline">Terms & Privacy Policy</a></p>
         </div>
       </div>
     </div>
