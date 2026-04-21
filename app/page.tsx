@@ -46,6 +46,22 @@ export default function Home() {
     router.push(`/browse?search=${encodeURIComponent(name)}&city=${city}`)
   }
 
+  const t = {
+    hero1: lang === 'en' ? 'Get Any Task Done — Right Here in Nepal' : 'जुनसुकै काम, नेपालमै गराउनुस्',
+    hero2: lang === 'en' ? 'जुनसुकै काम, नेपालमै गराउनुस् — सजिलो, छिटो, भरपर्दो' : 'Get any task done — easy, fast, reliable',
+    searchPlaceholder: lang === 'en' ? 'What do you need done? (e.g. Plumber, Cleaner)' : 'के काम चाहियो? (जस्तै: प्लम्बर, सफाई)',
+    findBtn: lang === 'en' ? '🔍 Find a Tasker' : '🔍 साथी खोज्नुस्',
+    becomeBtn: lang === 'en' ? '💼 Become a Tasker' : '💼 साथी बन्नुस्',
+    servicesTitle: lang === 'en' ? 'Popular Services' : 'लोकप्रिय सेवाहरू',
+    howTitle: lang === 'en' ? 'How It Works' : 'कसरी काम गर्छ',
+    taskersTitle: lang === 'en' ? 'Top Rated Taskers' : 'शीर्ष साथीहरू',
+    whyTitle: lang === 'en' ? 'Why KaamSathi?' : 'किन काम साथी?',
+    ctaTitle: lang === 'en' ? 'Ready to Get Started?' : 'सुरु गर्न तयार हुनुहुन्छ?',
+    bookNow: lang === 'en' ? 'Book Now' : 'बुक गर्नुस्',
+    login: lang === 'en' ? 'Login' : 'साइन इन',
+    signUp: lang === 'en' ? 'Sign Up Free' : 'नि:शुल्क दर्ता',
+  }
+
   return (
     <main style={{ fontFamily: "'Segoe UI', sans-serif", color: '#1a1a1a', background: '#fff', minHeight: '100vh' }}>
 
@@ -83,16 +99,16 @@ export default function Home() {
           </div>
 
           <button
-            onClick={() => router.push('/auth')}
+            onClick={() => router.push('/auth?type=login')}
             style={{ background: 'transparent', border: '1.5px solid #e8e8e8', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
           >
-            Login / साइन इन
+            {t.login}
           </button>
           <button
-            onClick={() => router.push('/auth')}
+            onClick={() => router.push('/auth?type=customer')}
             style={{ background: '#C0392B', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
           >
-            Sign Up Free
+            {t.signUp}
           </button>
         </div>
       </nav>

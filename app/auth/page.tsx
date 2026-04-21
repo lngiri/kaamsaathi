@@ -1,188 +1,255 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { theme } from '@/lib/theme'
 
-export default function AuthPage() {
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email')
+function AuthContent() {
+  const router = useRouter()
+  const params = useSearchParams()
+  const type = params.get('type') || 'customer'
+
+  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [method, setMethod] = useState<'email' | 'phone'>('email')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [step, setStep] = useState<'input' | 'otp'>('input')
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const router = useRouter()
+  const [msg, setMsg] = useState('')
 
-  // Email Magic Link Login
+  const isTasker = type === 'tasker'
+
   const sendMagicLink = async () => {
-    if (!email.includes('@')) {
-      setMessage('❌ Please enter a valid email')
-      return
-    }
+    if (!email.includes('@')) return setMsg('❌ Please enter a valid email')
     setLoading(true)
-    setMessage('')
     const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) setMessage('❌ ' + error.message)
-    else setMessage('✅ Magic link sent! Check your email.')
+    if (error) setMsg('❌ ' + error.message)
+    else setMsg('✅ Magic link sent! Check your email.')
     setLoading(false)
   }
 
-  // Phone OTP Login
   const sendOTP = async () => {
-    if (!phone.match(/^98\d{8}$/)) {
-      setMessage('❌ Enter valid Nepali number (98XXXXXXXX)')
-      return
-    }
+    if (!phone.match(/^98\d{8}$/)) return setMsg('❌ Enter valid Nepali number (98XXXXXXXX)')
     setLoading(true)
-    setMessage('')
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: `+977${phone}`
-    })
-    if (error) setMessage('❌ ' + error.message)
-    else {
-      setMessage('✅ OTP sent! Check your phone or Supabase logs.')
-      setStep('otp')
-    }
+    const { error } = await supabase.auth.signInWithOtp({ phone: `+977${phone}` })
+    if (error) setMsg('❌ ' + error.message)
+    else { setMsg('✅ OTP sent!'); setStep('otp') }
     setLoading(false)
   }
 
-  // Verify Phone OTP
   const verifyOTP = async () => {
-    if (!otp || otp.length !== 6) return setMessage('❌ Enter the 6-digit OTP')
+    if (otp.length !== 6) return setMsg('❌ Enter 6-digit OTP')
     setLoading(true)
     const { data, error } = await supabase.auth.verifyOtp({
-      phone: `+977${phone}`,
-      token: otp,
-      type: 'sms'
+      phone: `+977${phone}`, token: otp, type: 'sms'
     })
-    if (error) {
-      setMessage('❌ ' + error.message)
-    } else {
-      setMessage('✅ Login successful! Saving profile...')
+    if (error) { setMsg('❌ ' + error.message) }
+    else {
+      setMsg('✅ Success! Redirecting...')
       await supabase.from('users').upsert({
         id: data.user?.id ?? '',
-        phone: phone,
+        phone,
         full_name: `User ${phone.slice(-4)}`,
-        role: 'customer',
+        role: isTasker ? 'tasker' : 'customer',
         city: 'Kathmandu'
       }, { onConflict: 'id' })
-      setTimeout(() => router.push('/'), 1000)
+      setTimeout(() => router.push(isTasker ? '/become-tasker' : '/'), 1000)
     }
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
-        <h2 className="text-2xl font-bold text-center mb-1 text-gray-900">Login / साइन इन</h2>
-        <p className="text-gray-500 text-center mb-6 text-sm">Choose your preferred login method</p>
+    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: theme.fontFamily }}>
 
-        {/* Method Selector */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => { setLoginMethod('email'); setStep('input'); setMessage('') }}
-            className={`flex-1 py-2 rounded-lg font-medium transition ${
-              loginMethod === 'email'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            📧 Email
-          </button>
-          <button
-            onClick={() => { setLoginMethod('phone'); setStep('input'); setMessage('') }}
-            className={`flex-1 py-2 rounded-lg font-medium transition ${
-              loginMethod === 'phone'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            📱 Phone
-          </button>
+      {/* Left Panel */}
+      <div style={{
+        width: '420px', background: `linear-gradient(160deg, ${theme.secondary}, ${theme.primary})`,
+        color: '#fff', padding: '48px 36px', display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', flexShrink: 0
+      }}>
+        <div
+          onClick={() => router.push('/')}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px', cursor: 'pointer' }}
+        >
+          <div style={{
+            width: '42px', height: '42px', background: 'rgba(255,255,255,0.2)',
+            borderRadius: '10px', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontWeight: 700, fontSize: '20px'
+          }}>क</div>
+          <div>
+            <div style={{ fontSize: '20px', fontWeight: 700 }}>KaamSathi</div>
+            <div style={{ fontSize: '12px', opacity: 0.7 }}>काम साथी</div>
+          </div>
         </div>
 
-        {/* Email Login */}
-        {loginMethod === 'email' && step === 'input' && (
-          <div className="space-y-4">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-            />
-            <button
-              onClick={sendMagicLink}
-              disabled={loading}
-              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 transition"
-            >
-              {loading ? '⏳ Sending...' : '📨 Send Magic Link'}
-            </button>
-          </div>
-        )}
+        <h2 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '12px' }}>
+          {isTasker ? '💼 Join as a Tasker' : '🔍 Find a Tasker'}
+        </h2>
+        <p style={{ fontSize: '14px', opacity: 0.8, lineHeight: 1.7, marginBottom: '32px' }}>
+          {isTasker
+            ? 'Earn Rs 600–1,500/hr doing what you love. Set your own schedule and work near home.'
+            : 'Get any task done by trusted local professionals. Fast, safe, and affordable.'}
+        </p>
 
-        {/* Phone Login - Step 1 */}
-        {loginMethod === 'phone' && step === 'input' && (
-          <div className="space-y-4">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">+977</span>
+        {[
+          isTasker ? '💰 Earn Rs 600–1,500/hr' : '✅ 2,400+ verified taskers',
+          isTasker ? '⏰ Work on your schedule' : '📍 Find taskers nearby',
+          isTasker ? '🛡️ Insurance included' : '💰 Pay via eSewa / Khalti',
+          isTasker ? '📱 Free app & tools' : '⭐ Real reviews & ratings'
+        ].map((b, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', fontSize: '14px' }}>
+            <span>{b}</span>
+          </div>
+        ))}
+
+        <div style={{ marginTop: '32px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', padding: '16px' }}>
+          <p style={{ fontSize: '13px', opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6 }}>
+            {isTasker
+              ? '"KaamSathi मा आएपछि मेरो मासिक आम्दानी दोब्बर भयो।" — Sunita T.'
+              : '"Found a plumber in 15 minutes! Excellent service." — Aarav K.'}
+          </p>
+        </div>
+      </div>
+
+      {/* Right Panel */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f9', padding: '40px 20px' }}>
+        <div style={{
+          background: '#fff', borderRadius: '16px', padding: '36px',
+          width: '100%', maxWidth: '420px',
+          border: `1px solid ${theme.border}`,
+          boxShadow: theme.shadowLg
+        }}>
+          {/* Toggle: login vs signup */}
+          <div style={{ display: 'flex', marginBottom: '24px', border: `1.5px solid ${theme.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+            {(['login', 'signup'] as const).map(m => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                style={{
+                  flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600,
+                  background: mode === m ? theme.primary : '#fff',
+                  color: mode === m ? '#fff' : theme.muted
+                }}
+              >
+                {m === 'login' ? 'Login / साइन इन' : 'Sign Up / दर्ता'}
+              </button>
+            ))}
+          </div>
+
+          <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: theme.text }}>
+            {mode === 'login' ? 'Welcome back!' : isTasker ? 'Create Tasker Account' : 'Create Customer Account'}
+          </h3>
+          <p style={{ fontSize: '13px', color: theme.muted, marginBottom: '20px' }}>
+            {mode === 'login' ? 'Sign in to your KaamSathi account' : `Sign up as a ${isTasker ? 'Tasker / साथी' : 'Customer / ग्राहक'}`}
+          </p>
+
+          {/* Method toggle */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+            {(['email', 'phone'] as const).map(m => (
+              <button
+                key={m}
+                onClick={() => { setMethod(m); setStep('input'); setMsg('') }}
+                style={{
+                  flex: 1, padding: '9px', borderRadius: '8px', border: `1.5px solid ${method === m ? theme.primary : theme.border}`,
+                  background: method === m ? theme.primaryLight : '#fff',
+                  color: method === m ? theme.primary : theme.muted,
+                  cursor: 'pointer', fontSize: '13px', fontWeight: 600
+                }}
+              >
+                {m === 'email' ? '📧 Email' : '📱 Phone / फोन'}
+              </button>
+            ))}
+          </div>
+
+          {/* Email */}
+          {method === 'email' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
-                type="tel"
-                placeholder="98XXXXXXXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                type="email" placeholder="your@email.com" value={email}
+                onChange={e => setEmail(e.target.value)}
+                style={{ border: `1.5px solid ${theme.border}`, borderRadius: '9px', padding: '11px 14px', fontSize: '14px', outline: 'none' }}
               />
+              <button
+                onClick={sendMagicLink} disabled={loading}
+                style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: loading ? 0.6 : 1 }}
+              >
+                {loading ? '⏳ Sending...' : '📨 Send Magic Link'}
+              </button>
             </div>
-            <button
-              onClick={sendOTP}
-              disabled={loading || phone.length !== 10}
-              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {loading ? '⏳ Sending...' : '📩 Send OTP / OTP पठाउनुहोस्'}
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Phone Login - Step 2 (OTP) */}
-        {loginMethod === 'phone' && step === 'otp' && (
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Enter 6-digit code"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-center text-lg tracking-widest"
-            />
-            <button
-              onClick={verifyOTP}
-              disabled={loading || otp.length !== 6}
-              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {loading ? '⏳ Verifying...' : '✅ Verify OTP / पुष्टि गर्नुहोस्'}
-            </button>
-            <button
-              onClick={() => { setStep('input'); setOtp(''); setMessage('') }}
-              className="text-sm text-gray-500 hover:text-emerald-600 w-full text-center"
-            >
-              ← Change number / नम्बर बदल्नुहोस्
-            </button>
-          </div>
-        )}
+          {/* Phone */}
+          {method === 'phone' && step === 'input' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', border: `1.5px solid ${theme.border}`, borderRadius: '9px', overflow: 'hidden' }}>
+                <span style={{ padding: '11px 14px', background: '#f9f9f9', color: theme.muted, fontSize: '14px', borderRight: `1px solid ${theme.border}` }}>+977</span>
+                <input
+                  type="tel" placeholder="98XXXXXXXX" value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 14px', fontSize: '14px' }}
+                />
+              </div>
+              <button
+                onClick={sendOTP} disabled={loading || phone.length !== 10}
+                style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: (loading || phone.length !== 10) ? 0.6 : 1 }}
+              >
+                {loading ? '⏳ Sending...' : '📩 Send OTP / OTP पठाउनुहोस्'}
+              </button>
+            </div>
+          )}
 
-        {message && (
-          <div className={`mt-4 p-3 rounded-lg text-sm text-center ${
-            message.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-          }`}>
-            {message}
-          </div>
-        )}
+          {/* OTP */}
+          {method === 'phone' && step === 'otp' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <p style={{ fontSize: '13px', color: theme.muted }}>Enter the 6-digit OTP sent to +977{phone}</p>
+              <input
+                type="text" placeholder="• • • • • •" value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                style={{ border: `1.5px solid ${theme.border}`, borderRadius: '9px', padding: '12px', fontSize: '22px', textAlign: 'center', letterSpacing: '8px', outline: 'none' }}
+              />
+              <button
+                onClick={verifyOTP} disabled={loading || otp.length !== 6}
+                style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: (loading || otp.length !== 6) ? 0.6 : 1 }}
+              >
+                {loading ? '⏳ Verifying...' : '✅ Verify OTP'}
+              </button>
+              <button onClick={() => { setStep('input'); setOtp(''); setMsg('') }} style={{ background: 'none', border: 'none', color: theme.muted, cursor: 'pointer', fontSize: '13px' }}>
+                ← Change number
+              </button>
+            </div>
+          )}
 
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>By continuing, you agree to our</p>
-          <p><a href="#" className="text-emerald-600 hover:underline">Terms & Privacy Policy</a></p>
+          {msg && (
+            <div style={{
+              marginTop: '14px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', textAlign: 'center',
+              background: msg.startsWith('✅') ? theme.greenBg : theme.primaryLight,
+              color: msg.startsWith('✅') ? theme.green : theme.primary
+            }}>{msg}</div>
+          )}
+
+          {/* Switch type */}
+          <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: theme.muted }}>
+            {isTasker ? (
+              <span>Want to hire instead? <button onClick={() => router.push('/auth?type=customer')} style={{ color: theme.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign up as Customer</button></span>
+            ) : (
+              <span>Want to earn? <button onClick={() => router.push('/auth?type=tasker')} style={{ color: theme.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Join as Tasker</button></span>
+            )}
+          </div>
+
+          <p style={{ marginTop: '16px', textAlign: 'center', fontSize: '12px', color: theme.muted }}>
+            By continuing you agree to our <a href="#" style={{ color: theme.primary }}>Terms & Privacy Policy</a>
+          </p>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'Segoe UI' }}>Loading...</div>}>
+      <AuthContent />
+    </Suspense>
   )
 }
