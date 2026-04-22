@@ -3,7 +3,15 @@ import TaskerProfileClient from './TaskerProfileClient'
 export const dynamicParams = false
 
 export function generateStaticParams() {
-  return [{ id: 't1' }, { id: 't2' }]
+  // Generate static pages for all known tasker IDs
+  // From browse page: 't1', 't2'
+  // From admin page: 1, 2, 3, 4
+  const taskerIds = [
+    't1', 't2', // String IDs from browse page
+    '1', '2', '3', '4' // Numeric IDs from admin page (as strings for URL)
+  ]
+  
+  return taskerIds.map(id => ({ id }))
 }
 
 export default async function TaskerProfilePage({
