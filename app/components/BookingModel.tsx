@@ -264,17 +264,28 @@ export default function BookingModal({ tasker, onClose, serviceId }: Props) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        padding: '40px 20px',
+        justifyContent: 'center',
+        padding: '20px',
         fontFamily: theme.fontFamily,
-        overflowY: 'auto', // Enable scrolling for the overlay
-        backdropFilter: 'blur(4px)', // Optional: nicer UI
-        overscrollBehavior: 'contain', // Prevent background scroll chaining
+        overflowY: 'auto',
+        backdropFilter: 'blur(4px)',
+        overscrollBehavior: 'contain',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: '#fff', borderRadius: '16px', width: '480px', maxWidth: '100%', overflow: 'hidden', boxShadow: theme.shadowLg, margin: 'auto', flexShrink: 0 }}
+        style={{
+          background: '#fff',
+          borderRadius: '16px',
+          width: '480px',
+          maxWidth: 'calc(100vw - 40px)',
+          maxHeight: 'calc(100vh - 40px)',
+          overflow: 'hidden',
+          boxShadow: theme.shadowLg,
+          margin: 'auto',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
         {/* Header */}
         <div style={{ background: `linear-gradient(135deg, #003893, #DC143C)`, color: '#fff', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

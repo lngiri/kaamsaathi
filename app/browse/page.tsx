@@ -86,8 +86,8 @@ function BrowseContent() {
     <main style={{ minHeight: '100vh', background: theme.bg, fontFamily: theme.fontFamily }}>
       {/* Profile Modal */}
       {selectedTasker && (
-        <div onClick={() => setSelectedTasker(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', width: '440px', maxWidth: '95vw', overflow: 'hidden', boxShadow: theme.shadowLg }}>
+        <div onClick={() => setSelectedTasker(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', width: '440px', maxWidth: 'calc(100vw - 40px)', maxHeight: 'calc(100vh - 40px)', overflow: 'auto', boxShadow: theme.shadowLg }}>
             <div style={{ background: `linear-gradient(135deg, ${theme.secondary}, ${theme.primary})`, color: '#fff', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: selectedTasker.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 700, border: '3px solid rgba(255,255,255,0.3)', flexShrink: 0 }}>{selectedTasker.nep}</div>
               <div>
@@ -124,8 +124,8 @@ function BrowseContent() {
 
       {/* Post Task Modal */}
       {showPostTask && (
-        <div onClick={() => { setShowPostTask(false); setPostDone(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', width: '480px', maxWidth: '95vw', padding: '28px', boxShadow: theme.shadowLg }}>
+        <div onClick={() => { setShowPostTask(false); setPostDone(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', width: '480px', maxWidth: 'calc(100vw - 40px)', maxHeight: 'calc(100vh - 40px)', overflow: 'auto', padding: '28px', boxShadow: theme.shadowLg }}>
             {postDone ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{ fontSize: '56px', marginBottom: '12px' }}>📋</div>

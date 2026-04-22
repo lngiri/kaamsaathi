@@ -83,8 +83,8 @@ export default function AdminPage() {
 
       {/* Edit Service Modal */}
       {editSvc && (
-        <div onClick={() => setEditSvc(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:'14px', padding:'24px', width:'460px', maxWidth:'95vw' }}>
+        <div onClick={() => setEditSvc(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:'14px', padding:'24px', width:'460px', maxWidth:'calc(100vw - 40px)', maxHeight:'calc(100vh - 40px)', overflow:'auto' }}>
             <h3 style={{ fontSize:'16px', fontWeight:700, marginBottom:'16px' }}>Edit Service: {editSvc.icon} {editSvc.name_en}</h3>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
               <div><label style={{ fontSize:'11px', fontWeight:700, color:'#666', display:'block', marginBottom:'4px' }}>ICON</label><input value={editSvc.icon} onChange={e => setEditSvc({...editSvc, icon:e.target.value})} style={inp} /></div>
