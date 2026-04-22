@@ -1,16 +1,13 @@
 'use client'
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, Suspense, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { theme } from '@/lib/theme'
-import Navbar from '@/app/components/Navbar'
+import TaskerCard from '@/app/components/TaskerCard'
+import BookingModal from '@/app/components/BookingModel'
 
 const TASKERS = [
-  { id: 1, name: 'Ramesh Adhikari', nep: 'रा', city: 'Kathmandu', skills: ['Plumbing','Electrical'], rating: 5.0, tasks: 134, price: 800, dist: 1.2, online: true, gender: 'male', avail: 'now', bg: '#C0392B', bio: 'Expert plumber with 8 years experience. Available same day.' },
-  { id: 2, name: 'Sunita Tamang', nep: 'सु', city: 'Lalitpur', skills: ['Cleaning','Cooking'], rating: 4.9, tasks: 87, price: 600, dist: 2.4, online: true, gender: 'female', avail: 'now', bg: '#1a7a4a', bio: 'Professional cleaner. Brings own supplies. Highly rated.' },
-  { id: 3, name: 'Bikash Shrestha', nep: 'बि', city: 'Pokhara', skills: ['Moving','Painting'], rating: 4.8, tasks: 210, price: 700, dist: 5.1, online: false, gender: 'male', avail: 'today', bg: '#2563EB', bio: 'Strong and reliable mover. Can handle big apartments.' },
-  { id: 4, name: 'Priya Gurung', nep: 'प्र', city: 'Bhaktapur', skills: ['Tutoring','Tech Help'], rating: 4.9, tasks: 56, price: 900, dist: 3.7, online: true, gender: 'female', avail: 'now', bg: '#7c3aed', bio: 'Ex-teacher. Teaches SLC to +2 all subjects. Very patient.' },
-  { id: 5, name: 'Anil Maharjan', nep: 'अ', city: 'Kathmandu', skills: ['Gardening','Cleaning'], rating: 4.7, tasks: 92, price: 550, dist: 0.8, online: true, gender: 'male', avail: 'now', bg: '#0891b2', bio: 'Garden expert. Can also do deep cleaning.' },
-  { id: 6, name: 'Rita Basnet', nep: 'रि', city: 'Chitwan', skills: ['Cooking','Caretaking'], rating: 4.8, tasks: 45, price: 650, dist: 8.2, online: false, gender: 'female', avail: 'today', bg: '#be185d', bio: 'Cooks authentic Nepali food. Also provides elderly care.' },
+  { id: 't1', users: { full_name: 'Ramesh Adhikari' }, nep: 'रा', city: 'Kathmandu', skills: ['Plumbing','Electrical'], rating: 5.0, tasks: 134, hourly_rate: 800, dist: 1.2, online: true, gender: 'male', avail: 'now', bg: '#DC143C', bio: 'Expert plumber with 8 years experience.' },
+  { id: 't2', users: { full_name: 'Sunita Tamang' }, nep: 'सु', city: 'Lalitpur', skills: ['Cleaning','Cooking'], rating: 4.9, tasks: 87, hourly_rate: 600, dist: 2.4, online: true, gender: 'female', avail: 'now', bg: '#1a7a4a', bio: 'Professional cleaner.' },
 ]
 
 const CITIES = ['Kathmandu','Lalitpur','Bhaktapur','Pokhara','Chitwan','Butwal','Biratnagar']
@@ -19,7 +16,6 @@ const SERVICES = ['Plumbing','Cleaning','Electrical','Tutoring','Moving','Cookin
 type Tasker = typeof TASKERS[0]
 
 function BrowseContent() {
-  const router = useRouter()
   const params = useSearchParams()
 
   const [city, setCity] = useState(params.get('city') || 'Kathmandu')
@@ -32,28 +28,53 @@ function BrowseContent() {
   const [gender, setGender] = useState('any')
   const [view, setView] = useState<'grid'|'list'>('grid')
   const [selectedTasker, setSelectedTasker] = useState<Tasker | null>(null)
-  const [showPostTask, setShowPostTask] = useState(false)
+
+  // Modal & Form States
   const [showBooking, setShowBooking] = useState(false)
   const [bookingTasker, setBookingTasker] = useState<Tasker | null>(null)
-  const [taskDesc, setTaskDesc] = useState('')
-  const [taskAddr, setTaskAddr] = useState('')
-  const [taskDate, setTaskDate] = useState('')
-  const [bookingDone, setBookingDone] = useState(false)
+  const [showPostTask, setShowPostTask] = useState(false)
   const [postDone, setPostDone] = useState(false)
+  const [taskDate, setTaskDate] = useState('')
+  const [taskAddr, setTaskAddr] = useState('')
+  const [taskDesc, setTaskDesc] = useState('')
+  const [taskCategory, setTaskCategory] = useState('Cleaning')
+  const [taskCity, setTaskCity] = useState('Kathmandu')
+  const [taskPhone, setTaskPhone] = useState('')
+  const [taskBudget, setTaskBudget] = useState('')
 
-  const filtered = TASKERS.filter(t => {
-    const q = search.toLowerCase()
-    return (
-      (city === '' || t.city.toLowerCase().includes(city.toLowerCase())) &&
-      (search === '' || t.name.toLowerCase().includes(q) || t.skills.some(s => s.toLowerCase().includes(q))) &&
-      (selectedService === '' || t.skills.some(s => s.toLowerCase().includes(selectedService.toLowerCase()))) &&
-      t.rating >= minRating &&
-      t.price <= maxPrice &&
-      t.dist <= maxDist &&
-      (avail.length === 0 || avail.includes(t.avail)) &&
-      (gender === 'any' || t.gender === gender)
-    )
-  })
+  // Optimized Client-Side Search & Filter Logic
+  const filtered = useMemo(() => {
+    return TASKERS.filter(t => {
+      const q = search.toLowerCase()
+      
+      // 1. Location Filter (strict match by City)
+      const matchesLocation = city === '' || t.city === city
+
+      // 2. Service/Search Filter (filters by Name or Skills)
+      const matchesSearch = search === '' || 
+        t.users.full_name.toLowerCase().includes(q) || 
+        t.skills.some(skill => skill.toLowerCase().includes(q))
+      
+      // 3. Category Filter (Service Pills)
+      const matchesCategory = selectedService === '' || 
+        t.skills.some(skill => skill.toLowerCase() === selectedService.toLowerCase())
+
+      // 4. Rating Filter (Rating >= X)
+      const matchesRating = t.rating >= minRating
+
+      // 5. Price Range (Max Price limit)
+      const matchesPrice = t.hourly_rate <= maxPrice
+
+      // Secondary Filters
+      const matchesDist = t.dist <= maxDist
+      const matchesAvail = avail.length === 0 || avail.includes(t.avail)
+      const matchesGender = gender === 'any' || t.gender === gender
+
+      return matchesLocation && matchesSearch && matchesCategory && 
+             matchesRating && matchesPrice && matchesDist && 
+             matchesAvail && matchesGender
+    })
+  }, [city, search, selectedService, minRating, maxPrice, maxDist, avail, gender])
 
   const inp = (override?: Partial<React.CSSProperties>): React.CSSProperties => ({
     border: `1.5px solid ${theme.border}`, borderRadius: '9px', padding: '10px 13px',
@@ -63,8 +84,6 @@ function BrowseContent() {
 
   return (
     <main style={{ minHeight: '100vh', background: theme.bg, fontFamily: theme.fontFamily }}>
-      <Navbar />
-
       {/* Profile Modal */}
       {selectedTasker && (
         <div onClick={() => setSelectedTasker(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -72,14 +91,14 @@ function BrowseContent() {
             <div style={{ background: `linear-gradient(135deg, ${theme.secondary}, ${theme.primary})`, color: '#fff', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: selectedTasker.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 700, border: '3px solid rgba(255,255,255,0.3)', flexShrink: 0 }}>{selectedTasker.nep}</div>
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '2px' }}>{selectedTasker.name}</h3>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '2px' }}>{selectedTasker.users.full_name}</h3>
                 <p style={{ fontSize: '13px', opacity: 0.8 }}>📍 {selectedTasker.city} · ⭐ {selectedTasker.rating} ({selectedTasker.tasks} reviews)</p>
               </div>
             </div>
             <div style={{ padding: '20px 24px' }}>
               {[
                 ['Skills', selectedTasker.skills.join(', ')],
-                ['Rate', `Rs ${selectedTasker.price}/hr`],
+                ['Rate', `Rs ${selectedTasker.hourly_rate}/hr`],
                 ['Distance', `${selectedTasker.dist} km away`],
                 ['Availability', selectedTasker.avail === 'now' ? '✅ Available Now' : 'Available Today'],
                 ['About', selectedTasker.bio],
@@ -100,60 +119,7 @@ function BrowseContent() {
 
       {/* Booking Modal */}
       {showBooking && bookingTasker && (
-        <div onClick={() => { setShowBooking(false); setBookingDone(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '16px', width: '440px', maxWidth: '95vw', padding: '28px', boxShadow: theme.shadowLg }}>
-            {bookingDone ? (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <div style={{ fontSize: '56px', marginBottom: '12px' }}>🎉</div>
-                <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Booking Confirmed!</h3>
-                <p style={{ color: theme.muted, fontSize: '14px', marginBottom: '8px' }}>बुकिङ सफल भयो! {bookingTasker.name} लाई SMS पठाइयो।</p>
-                <div style={{ background: theme.bg, borderRadius: '10px', padding: '14px', margin: '16px 0', fontSize: '13px' }}>
-                  <strong>Ref: KS-{Math.floor(1000 + Math.random() * 9000)}</strong><br />
-                  <span style={{ color: theme.muted }}>Save this reference number</span>
-                </div>
-                <button onClick={() => { setShowBooking(false); setBookingDone(false) }} style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '11px 28px', fontWeight: 600, cursor: 'pointer' }}>Done</button>
-              </div>
-            ) : (
-              <>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, marginBottom: '4px' }}>Book {bookingTasker.name}</h3>
-                <p style={{ color: theme.muted, fontSize: '13px', marginBottom: '20px' }}>📍 {bookingTasker.city} · Rs {bookingTasker.price}/hr</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>DATE / मिति *</label>
-                    <input type="date" value={taskDate} onChange={e => setTaskDate(e.target.value)} style={inp()} min={new Date().toISOString().split('T')[0]} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>YOUR ADDRESS / ठेगाना *</label>
-                    <input type="text" placeholder="e.g. Thamel, Ward 26, Kathmandu" value={taskAddr} onChange={e => setTaskAddr(e.target.value)} style={inp()} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>DESCRIBE YOUR TASK / काम बताउनुस्</label>
-                    <textarea placeholder="What exactly do you need done?" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} style={{ ...inp(), minHeight: '80px', resize: 'vertical' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>PAYMENT METHOD</label>
-                    <select style={inp()}>
-                      <option>📱 eSewa</option>
-                      <option>💜 Khalti</option>
-                      <option>💵 Cash on Completion</option>
-                      <option>🏦 Bank Transfer</option>
-                    </select>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                  <button onClick={() => setShowBooking(false)} style={{ flex: 1, padding: '11px', border: `1.5px solid ${theme.border}`, borderRadius: '9px', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-                  <button
-                    onClick={() => { if (taskDate && taskAddr) setBookingDone(true) }}
-                    disabled={!taskDate || !taskAddr}
-                    style={{ flex: 2, padding: '11px', background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', cursor: 'pointer', fontWeight: 600, opacity: (!taskDate || !taskAddr) ? 0.6 : 1 }}
-                  >
-                    🚀 Confirm Booking
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <BookingModal tasker={bookingTasker} onClose={() => setShowBooking(false)} />
       )}
 
       {/* Post Task Modal */}
@@ -175,7 +141,7 @@ function BrowseContent() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>SERVICE NEEDED *</label>
-                    <select style={inp()}>
+                    <select value={taskCategory} onChange={e => setTaskCategory(e.target.value)} style={inp()}>
                       {SERVICES.map(s => <option key={s}>{s}</option>)}
                       <option>Other / अन्य</option>
                     </select>
@@ -191,8 +157,8 @@ function BrowseContent() {
                     </div>
                     <div>
                       <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>CITY *</label>
-                      <select style={inp()}>
-                        {CITIES.map(c => <option key={c}>{c}</option>)}
+                      <select value={taskCity} onChange={e => setTaskCity(e.target.value)} style={inp()}>
+                        {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                   </div>
@@ -204,12 +170,12 @@ function BrowseContent() {
                     <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>YOUR PHONE *</label>
                     <div style={{ display: 'flex', border: `1.5px solid ${theme.border}`, borderRadius: '9px', overflow: 'hidden' }}>
                       <span style={{ padding: '10px 13px', background: '#f9f9f9', color: theme.muted, borderRight: `1px solid ${theme.border}` }}>+977</span>
-                      <input type="tel" placeholder="98XXXXXXXX" style={{ flex: 1, border: 'none', outline: 'none', padding: '10px 13px', fontSize: '14px' }} />
+                      <input type="tel" placeholder="98XXXXXXXX" value={taskPhone} onChange={e => setTaskPhone(e.target.value.replace(/\D/g,'').slice(0,10))} style={{ flex: 1, border: 'none', outline: 'none', padding: '10px 13px', fontSize: '14px' }} />
                     </div>
                   </div>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 700, color: theme.muted, display: 'block', marginBottom: '5px' }}>BUDGET (Rs) — Optional</label>
-                    <input type="number" placeholder="e.g. 1500" style={inp()} />
+                    <input type="number" placeholder="e.g. 1500" value={taskBudget} onChange={e => setTaskBudget(e.target.value)} style={inp()} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
@@ -361,31 +327,12 @@ function BrowseContent() {
           ) : (
             <div style={{ display: view === 'grid' ? 'grid' : 'flex', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', flexDirection: 'column', gap: '16px' }}>
               {filtered.map(t => (
-                <div key={t.id} style={{ background: '#fff', border: `1.5px solid ${theme.border}`, borderRadius: theme.radiusLg, overflow: 'hidden', display: view === 'list' ? 'flex' : 'block' }}>
-                  <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'flex-start', gap: '14px', flex: view === 'list' ? 1 : 'unset' }}>
-                    <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '19px', fontWeight: 700, color: '#fff', flexShrink: 0, position: 'relative' }}>
-                      {t.nep}
-                      <div style={{ position: 'absolute', bottom: '1px', right: '1px', width: '12px', height: '12px', borderRadius: '50%', background: t.online ? theme.green : '#ccc', border: '2px solid #fff' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '2px' }}>{t.name}</h3>
-                      <div style={{ fontSize: '12px', color: theme.muted, marginBottom: '4px' }}>📍 {t.city} · <span style={{ color: theme.blue }}>{t.dist} km</span></div>
-                      <div style={{ fontSize: '12px', color: '#f59e0b' }}>★ <strong style={{ color: theme.text }}>{t.rating}</strong> <span style={{ color: theme.muted }}>({t.tasks} reviews)</span></div>
-                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '6px' }}>
-                        {t.skills.map(s => <span key={s} style={{ background: theme.primaryLight, color: theme.primary, fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: 500 }}>{s}</span>)}
-                        <span style={{ background: t.online ? theme.greenBg : '#f3f4f6', color: t.online ? theme.green : theme.muted, fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: 500 }}>{t.online ? '● Online' : '○ Offline'}</span>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: theme.green }}>Rs {t.price}<span style={{ fontSize: '10px', fontWeight: 400, color: theme.muted }}>/hr</span></div>
-                      <div style={{ fontSize: '10px', color: theme.muted, marginTop: '2px' }}>{t.avail === 'now' ? '✅ Now' : 'Today'}</div>
-                    </div>
-                  </div>
-                  <div style={{ padding: '10px 18px 14px', borderTop: view === 'list' ? 'none' : `1px solid ${theme.border}`, display: 'flex', gap: '8px', borderLeft: view === 'list' ? `1px solid ${theme.border}` : 'none', alignItems: 'center' }}>
-                    <button onClick={() => { setBookingTasker(t); setShowBooking(true) }} style={{ flex: 1, padding: '8px', background: theme.primary, color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>📅 Book Now</button>
-                    <button onClick={() => setSelectedTasker(t)} style={{ flex: 1, padding: '8px', background: '#fff', color: theme.text, border: `1.5px solid ${theme.border}`, borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>👤 View Profile</button>
-                  </div>
-                </div>
+                <TaskerCard 
+                  key={t.id} 
+                  tasker={t}
+                  view={view} 
+                  onBook={() => { setBookingTasker(t); setShowBooking(true) }} 
+                />
               ))}
             </div>
           )}

@@ -1,9 +1,56 @@
 'use client'
+
+import { useEffect, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { theme } from '@/lib/theme'
+import { supabase } from '@/lib/supabase'
+import { getTaskerProfile } from '@/lib/appAuth'
 
 export default function Navbar() {
   const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [isTasker, setIsTasker] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function syncAuthState(nextUser: User | null) {
+      if (!mounted) return
+
+      setUser(nextUser)
+
+      if (!nextUser) {
+        setIsTasker(false)
+        return
+      }
+
+      const taskerProfile = await getTaskerProfile(nextUser.id)
+      if (mounted) {
+        setIsTasker(Boolean(taskerProfile))
+      }
+    }
+
+    supabase.auth.getUser().then(({ data }) => {
+      void syncAuthState(data.user)
+    })
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        void syncAuthState(session?.user ?? null)
+      }
+    )
+
+    return () => {
+      mounted = false
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
 
   return (
     <nav style={{
@@ -12,7 +59,6 @@ export default function Navbar() {
       position: 'sticky', top: 0, background: theme.white, zIndex: 100,
       boxShadow: theme.shadow
     }}>
-      {/* Logo */}
       <div
         onClick={() => router.push('/')}
         style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
@@ -28,68 +74,78 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Nav Links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '14px' }}>
-        <span
-          onClick={() => router.push('/#how-it-works')}
-          style={{ color: theme.muted, cursor: 'pointer' }}
-        >
+        <span onClick={() => router.push('/#how-it-works')} style={{ color: theme.muted, cursor: 'pointer' }}>
           How it Works
         </span>
-        <span
-          onClick={() => router.push('/browse')}
-          style={{ color: theme.muted, cursor: 'pointer' }}
-        >
+        <span onClick={() => router.push('/browse')} style={{ color: theme.muted, cursor: 'pointer' }}>
           Browse / खोज्नुस्
         </span>
-        <span
-          onClick={() => router.push('/post-task')}
-          style={{ color: theme.muted, cursor: 'pointer' }}
-        >
+        <span onClick={() => router.push('/post-task')} style={{ color: theme.muted, cursor: 'pointer' }}>
           Post a Task
         </span>
-        <span
-          onClick={() => router.push('/become-tasker')}
-          style={{ color: theme.muted, cursor: 'pointer' }}
-        >
+        <span onClick={() => router.push('/become-tasker')} style={{ color: theme.muted, cursor: 'pointer' }}>
           Become a Tasker
         </span>
+        <span onClick={() => router.push('/refer')} style={{ color: theme.primary, cursor: 'pointer', fontWeight: 700 }}>
+          Refer & Earn
+        </span>
 
-        {/* Login */}
-        <button
-          onClick={() => router.push('/auth?type=login')}
-          style={{
-            background: 'transparent', border: `1.5px solid ${theme.border}`,
-            borderRadius: theme.radiusMd, padding: '8px 16px',
-            cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: theme.text
-          }}
-        >
-          Login / साइन इन
-        </button>
-
-        {/* Sign Up — splits into customer vs tasker */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => router.push('/auth?type=customer')}
-            style={{
-              background: theme.primary, color: '#fff', border: 'none',
-              borderRadius: theme.radiusMd, padding: '9px 16px',
-              cursor: 'pointer', fontSize: '13px', fontWeight: 600
-            }}
-          >
-            🔍 Hire a Tasker
-          </button>
-          <button
-            onClick={() => router.push('/auth?type=tasker')}
-            style={{
-              background: theme.secondary, color: '#fff', border: 'none',
-              borderRadius: theme.radiusMd, padding: '9px 16px',
-              cursor: 'pointer', fontSize: '13px', fontWeight: 600
-            }}
-          >
-            💼 Be a Tasker
-          </button>
-        </div>
+        {user ? (
+          <>
+            <span
+              onClick={() => router.push(isTasker ? '/dashboard/tasker' : '/dashboard/customer')}
+              style={{ color: theme.muted, cursor: 'pointer' }}
+            >
+              {isTasker ? 'Tasker Dashboard' : 'My Dashboard'}
+            </span>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'transparent', border: `1.5px solid ${theme.border}`,
+                borderRadius: theme.radiusMd, padding: '8px 16px',
+                cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: theme.text
+              }}
+            >
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => router.push('/auth?type=login')}
+              style={{
+                background: 'transparent', border: `1.5px solid ${theme.border}`,
+                borderRadius: theme.radiusMd, padding: '8px 16px',
+                cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: theme.text
+              }}
+            >
+              Login / साइन इन
+            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => router.push('/auth?type=customer')}
+                style={{
+                  background: theme.primary, color: '#fff', border: 'none',
+                  borderRadius: theme.radiusMd, padding: '9px 16px',
+                  cursor: 'pointer', fontSize: '13px', fontWeight: 600
+                }}
+              >
+                Hire a Tasker
+              </button>
+              <button
+                onClick={() => router.push('/auth?type=tasker')}
+                style={{
+                  background: theme.secondary, color: '#fff', border: 'none',
+                  borderRadius: theme.radiusMd, padding: '9px 16px',
+                  cursor: 'pointer', fontSize: '13px', fontWeight: 600
+                }}
+              >
+                Be a Tasker
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </nav>
   )

@@ -1,18 +1,19 @@
 // =============================================
 // KaamSathi Global Theme
+// Nepal Flag Colors & Design System
 // Change colors here — updates ALL pages!
 // =============================================
 
 export const theme = {
-  // Primary brand color (red)
-  primary:        '#C0392B',
-  primaryDark:    '#a93226',
-  primaryLight:   '#fdecea',
+  // Primary brand color (Nepal Flag - Crimson Red)
+  primary:        '#DC143C',
+  primaryDark:    '#A30030',
+  primaryLight:   '#FF6B6B',
   primaryText:    '#fff',
 
-  // Secondary / accent
-  secondary:      '#1a1a2e',
-  secondaryLight: '#16213e',
+  // Secondary / accent (Nepal Flag - Dark Blue)
+  secondary:      '#003893',
+  secondaryLight: '#0052CC',
 
   // Status colors
   green:          '#16a34a',

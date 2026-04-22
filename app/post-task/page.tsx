@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { theme } from '@/lib/theme'
-import Navbar from '@/app/components/Navbar'
+import { generateRef } from '@/lib/helpers'
 
 const SERVICES = ['Plumbing','Cleaning','Electrical','Tutoring','Moving','Cooking','Tech Help','Gardening','Caretaking','Painting','Driver','Pet Care','Other']
 const CITIES = ['Kathmandu','Lalitpur','Bhaktapur','Pokhara','Chitwan','Butwal','Biratnagar']
@@ -20,6 +20,7 @@ export default function PostTaskPage() {
   const [budget, setBudget] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [done, setDone] = useState(false)
+  const [taskRef] = useState(() => generateRef())
 
   const inp: React.CSSProperties = {
     border: `1.5px solid ${theme.border}`, borderRadius: '9px', padding: '11px 14px',
@@ -32,7 +33,6 @@ export default function PostTaskPage() {
 
   if (done) return (
     <main style={{ minHeight: '100vh', background: theme.bg, fontFamily: theme.fontFamily }}>
-      <Navbar />
       <div style={{ maxWidth: '500px', margin: '80px auto', textAlign: 'center', padding: '0 20px' }}>
         <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
         <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Task Posted Successfully!</h2>
@@ -40,7 +40,7 @@ export default function PostTaskPage() {
         <div style={{ background: '#fff', border: `1px solid ${theme.border}`, borderRadius: theme.radiusMd, padding: '20px', margin: '24px 0', textAlign: 'left' }}>
           <div style={{ fontSize: '12px', color: theme.muted, marginBottom: '8px' }}>TASK REFERENCE</div>
           <div style={{ fontSize: '22px', fontWeight: 700, color: theme.primary, letterSpacing: '2px', marginBottom: '8px' }}>
-            KS-{Math.floor(1000 + Math.random() * 9000)}
+            {taskRef}
           </div>
           <p style={{ fontSize: '13px', color: theme.muted }}>Save this number. Nearby taskers will contact you via SMS at +977{phone}.</p>
         </div>
@@ -54,8 +54,6 @@ export default function PostTaskPage() {
 
   return (
     <main style={{ minHeight: '100vh', background: theme.bg, fontFamily: theme.fontFamily }}>
-      <Navbar />
-
       {/* Header */}
       <div style={{ background: `linear-gradient(135deg, ${theme.secondary}, ${theme.primary})`, padding: '36px 5%', color: '#fff', textAlign: 'center' }}>
         <h1 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '8px' }}>Post a Task / काम पोस्ट गर्नुस्</h1>

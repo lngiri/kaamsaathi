@@ -1,15 +1,21 @@
 'use client'
-import { useState, Suspense } from 'react'
-import { supabase } from '@/lib/supabase'
+
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { theme } from '@/lib/theme'
+import { ensureUserRecords, storeReferral } from '@/lib/appAuth'
 
 function AuthContent() {
   const router = useRouter()
   const params = useSearchParams()
   const type = params.get('type') || 'customer'
+  const ref = params.get('ref')
+  const isTasker = type === 'tasker'
+  const defaultMode: 'login' | 'signup' =
+    type === 'login' ? 'login' : 'signup'
 
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup'>(defaultMode)
   const [method, setMethod] = useState<'email' | 'phone'>('email')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -18,12 +24,39 @@ function AuthContent() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
-  const isTasker = type === 'tasker'
+  useEffect(() => {
+    if (ref) {
+      storeReferral(ref)
+    }
+  }, [ref])
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!session?.user) return
+
+        await ensureUserRecords(session.user, isTasker ? 'tasker' : 'customer')
+        router.push(isTasker ? '/become-tasker' : '/dashboard/customer')
+      }
+    )
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [isTasker, router])
 
   const sendMagicLink = async () => {
     if (!email.includes('@')) return setMsg('❌ Please enter a valid email')
     setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo:
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/auth?type=${type}${ref ? `&ref=${ref}` : ''}`
+            : undefined,
+      },
+    })
     if (error) setMsg('❌ ' + error.message)
     else setMsg('✅ Magic link sent! Check your email.')
     setLoading(false)
@@ -44,25 +77,20 @@ function AuthContent() {
     const { data, error } = await supabase.auth.verifyOtp({
       phone: `+977${phone}`, token: otp, type: 'sms'
     })
-    if (error) { setMsg('❌ ' + error.message) }
-    else {
+    if (error) {
+      setMsg('❌ ' + error.message)
+    } else {
+      if (data.user) {
+        await ensureUserRecords(data.user, isTasker ? 'tasker' : 'customer')
+      }
       setMsg('✅ Success! Redirecting...')
-      await supabase.from('users').upsert({
-        id: data.user?.id ?? '',
-        phone,
-        full_name: `User ${phone.slice(-4)}`,
-        role: isTasker ? 'tasker' : 'customer',
-        city: 'Kathmandu'
-      }, { onConflict: 'id' })
-      setTimeout(() => router.push(isTasker ? '/become-tasker' : '/'), 1000)
+      setTimeout(() => router.push(isTasker ? '/become-tasker' : '/dashboard/customer'), 1000)
     }
     setLoading(false)
   }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: theme.fontFamily }}>
-
-      {/* Left Panel */}
       <div style={{
         width: '420px', background: `linear-gradient(160deg, ${theme.secondary}, ${theme.primary})`,
         color: '#fff', padding: '48px 36px', display: 'flex', flexDirection: 'column',
@@ -84,35 +112,26 @@ function AuthContent() {
         </div>
 
         <h2 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '12px' }}>
-          {isTasker ? '💼 Join as a Tasker' : '🔍 Find a Tasker'}
+          {isTasker ? 'Join as a Tasker' : 'Find a Tasker'}
         </h2>
         <p style={{ fontSize: '14px', opacity: 0.8, lineHeight: 1.7, marginBottom: '32px' }}>
           {isTasker
-            ? 'Earn Rs 600–1,500/hr doing what you love. Set your own schedule and work near home.'
+            ? 'Earn Rs 600-1,500/hr doing what you love. Set your own schedule and work near home.'
             : 'Get any task done by trusted local professionals. Fast, safe, and affordable.'}
         </p>
 
         {[
-          isTasker ? '💰 Earn Rs 600–1,500/hr' : '✅ 2,400+ verified taskers',
-          isTasker ? '⏰ Work on your schedule' : '📍 Find taskers nearby',
-          isTasker ? '🛡️ Insurance included' : '💰 Pay via eSewa / Khalti',
-          isTasker ? '📱 Free app & tools' : '⭐ Real reviews & ratings'
-        ].map((b, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', fontSize: '14px' }}>
-            <span>{b}</span>
+          isTasker ? 'Earn Rs 600-1,500/hr' : '2,400+ verified taskers',
+          isTasker ? 'Work on your schedule' : 'Find taskers nearby',
+          isTasker ? 'Insurance included' : 'Pay via eSewa / Khalti',
+          isTasker ? 'Free app & tools' : 'Real reviews & ratings'
+        ].map((benefit, index) => (
+          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', fontSize: '14px' }}>
+            <span>{benefit}</span>
           </div>
         ))}
-
-        <div style={{ marginTop: '32px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', padding: '16px' }}>
-          <p style={{ fontSize: '13px', opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6 }}>
-            {isTasker
-              ? '"KaamSathi मा आएपछि मेरो मासिक आम्दानी दोब्बर भयो।" — Sunita T.'
-              : '"Found a plumber in 15 minutes! Excellent service." — Aarav K.'}
-          </p>
-        </div>
       </div>
 
-      {/* Right Panel */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9f9f9', padding: '40px 20px' }}>
         <div style={{
           background: '#fff', borderRadius: '16px', padding: '36px',
@@ -120,7 +139,6 @@ function AuthContent() {
           border: `1px solid ${theme.border}`,
           boxShadow: theme.shadowLg
         }}>
-          {/* Toggle: login vs signup */}
           <div style={{ display: 'flex', marginBottom: '24px', border: `1.5px solid ${theme.border}`, borderRadius: '10px', overflow: 'hidden' }}>
             {(['login', 'signup'] as const).map(m => (
               <button
@@ -141,10 +159,9 @@ function AuthContent() {
             {mode === 'login' ? 'Welcome back!' : isTasker ? 'Create Tasker Account' : 'Create Customer Account'}
           </h3>
           <p style={{ fontSize: '13px', color: theme.muted, marginBottom: '20px' }}>
-            {mode === 'login' ? 'Sign in to your KaamSathi account' : `Sign up as a ${isTasker ? 'Tasker / साथी' : 'Customer / ग्राहक'}`}
+            {mode === 'login' ? 'Sign in to your KaamSathi account' : `Sign up as a ${isTasker ? 'Tasker' : 'Customer'}`}
           </p>
 
-          {/* Method toggle */}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
             {(['email', 'phone'] as const).map(m => (
               <button
@@ -157,12 +174,11 @@ function AuthContent() {
                   cursor: 'pointer', fontSize: '13px', fontWeight: 600
                 }}
               >
-                {m === 'email' ? '📧 Email' : '📱 Phone / फोन'}
+                {m === 'email' ? 'Email' : 'Phone / फोन'}
               </button>
             ))}
           </div>
 
-          {/* Email */}
           {method === 'email' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
@@ -174,12 +190,11 @@ function AuthContent() {
                 onClick={sendMagicLink} disabled={loading}
                 style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: loading ? 0.6 : 1 }}
               >
-                {loading ? '⏳ Sending...' : '📨 Send Magic Link'}
+                {loading ? 'Sending...' : 'Send Magic Link'}
               </button>
             </div>
           )}
 
-          {/* Phone */}
           {method === 'phone' && step === 'input' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', border: `1.5px solid ${theme.border}`, borderRadius: '9px', overflow: 'hidden' }}>
@@ -194,12 +209,11 @@ function AuthContent() {
                 onClick={sendOTP} disabled={loading || phone.length !== 10}
                 style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: (loading || phone.length !== 10) ? 0.6 : 1 }}
               >
-                {loading ? '⏳ Sending...' : '📩 Send OTP / OTP पठाउनुहोस्'}
+                {loading ? 'Sending...' : 'Send OTP'}
               </button>
             </div>
           )}
 
-          {/* OTP */}
           {method === 'phone' && step === 'otp' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <p style={{ fontSize: '13px', color: theme.muted }}>Enter the 6-digit OTP sent to +977{phone}</p>
@@ -212,10 +226,10 @@ function AuthContent() {
                 onClick={verifyOTP} disabled={loading || otp.length !== 6}
                 style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '9px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: (loading || otp.length !== 6) ? 0.6 : 1 }}
               >
-                {loading ? '⏳ Verifying...' : '✅ Verify OTP'}
+                {loading ? 'Verifying...' : 'Verify OTP'}
               </button>
               <button onClick={() => { setStep('input'); setOtp(''); setMsg('') }} style={{ background: 'none', border: 'none', color: theme.muted, cursor: 'pointer', fontSize: '13px' }}>
-                ← Change number
+                Change number
               </button>
             </div>
           )}
@@ -228,7 +242,6 @@ function AuthContent() {
             }}>{msg}</div>
           )}
 
-          {/* Switch type */}
           <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: theme.muted }}>
             {isTasker ? (
               <span>Want to hire instead? <button onClick={() => router.push('/auth?type=customer')} style={{ color: theme.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign up as Customer</button></span>
@@ -236,10 +249,6 @@ function AuthContent() {
               <span>Want to earn? <button onClick={() => router.push('/auth?type=tasker')} style={{ color: theme.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Join as Tasker</button></span>
             )}
           </div>
-
-          <p style={{ marginTop: '16px', textAlign: 'center', fontSize: '12px', color: theme.muted }}>
-            By continuing you agree to our <a href="#" style={{ color: theme.primary }}>Terms & Privacy Policy</a>
-          </p>
         </div>
       </div>
     </div>

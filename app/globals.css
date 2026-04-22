@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --nepal-red: #DC143C;
+  --nepal-blue: #003893;
 }
 
 @theme inline {
