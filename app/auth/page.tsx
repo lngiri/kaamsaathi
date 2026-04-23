@@ -48,13 +48,21 @@ function AuthContent() {
   const sendMagicLink = async () => {
     if (!email.includes('@')) return setMsg('❌ Please enter a valid email')
     setLoading(true)
+    
+    // Get the correct site URL - use environment variable in production, fallback to window.location.origin
+    let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    if (!siteUrl && typeof window !== 'undefined') {
+      siteUrl = window.location.origin
+    }
+    
+    const redirectUrl = siteUrl
+      ? `${siteUrl}/auth?type=${type}${ref ? `&ref=${ref}` : ''}`
+      : undefined
+    
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo:
-          typeof window !== 'undefined'
-            ? `${window.location.origin}/auth?type=${type}${ref ? `&ref=${ref}` : ''}`
-            : undefined,
+        emailRedirectTo: redirectUrl,
       },
     })
     if (error) setMsg('❌ ' + error.message)
