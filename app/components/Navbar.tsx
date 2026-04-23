@@ -76,19 +76,19 @@ export default function Navbar() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '14px' }}>
         <span onClick={() => router.push('/#how-it-works')} style={{ color: theme.muted, cursor: 'pointer' }}>
-          How it Works
+          How it Works / कसरी काम गर्छ
         </span>
         <span onClick={() => router.push('/browse')} style={{ color: theme.muted, cursor: 'pointer' }}>
           Browse / खोज्नुस्
         </span>
         <span onClick={() => router.push('/post-task')} style={{ color: theme.muted, cursor: 'pointer' }}>
-          Post a Task
+          Post a Task / काम पोस्ट गर्नुस्
         </span>
         <span onClick={() => router.push('/become-tasker')} style={{ color: theme.muted, cursor: 'pointer' }}>
-          Become a Tasker
+          Become a Tasker / साथी बन्नुस्
         </span>
         <span onClick={() => router.push('/refer')} style={{ color: theme.primary, cursor: 'pointer', fontWeight: 700 }}>
-          Refer & Earn
+          Refer & Earn / सिफारिस गर्नुस्
         </span>
 
         {user ? (
@@ -97,7 +97,7 @@ export default function Navbar() {
               onClick={() => router.push(isTasker ? '/dashboard/tasker' : '/dashboard/customer')}
               style={{ color: theme.muted, cursor: 'pointer' }}
             >
-              {isTasker ? 'Tasker Dashboard' : 'My Dashboard'}
+              {isTasker ? 'Tasker Dashboard / साथी ड्यासबोर्ड' : 'My Dashboard / मेरो ड्यासबोर्ड'}
             </span>
             <button
               onClick={handleSignOut}
@@ -107,7 +107,7 @@ export default function Navbar() {
                 cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: theme.text
               }}
             >
-              Sign Out
+              Sign Out / साइन आउट
             </button>
           </>
         ) : (
@@ -131,7 +131,7 @@ export default function Navbar() {
                   cursor: 'pointer', fontSize: '13px', fontWeight: 600
                 }}
               >
-                Hire a Tasker
+                Hire a Tasker / साथी भाडामा लिनुस्
               </button>
               <button
                 onClick={() => router.push('/auth?type=tasker')}
@@ -141,7 +141,7 @@ export default function Navbar() {
                   cursor: 'pointer', fontSize: '13px', fontWeight: 600
                 }}
               >
-                Be a Tasker
+                Be a Tasker / साथी बन्नुस्
               </button>
             </div>
           </>
