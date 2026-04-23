@@ -49,15 +49,20 @@ function AuthContent() {
     if (!email.includes('@')) return setMsg('❌ Please enter a valid email')
     setLoading(true)
     
-    // Get the correct site URL - use environment variable in production, fallback to window.location.origin
-    let siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-    if (!siteUrl && typeof window !== 'undefined') {
-      siteUrl = window.location.origin
-    }
+    // URGENT FIX: Always use production URL for magic links
+    // This overrides any environment variable or localhost detection
+    // Supabase magic links MUST point to the production site
+    const productionSiteUrl = 'https://kaamsaathi.pages.dev'
     
-    const redirectUrl = siteUrl
-      ? `${siteUrl}/auth?type=${type}${ref ? `&ref=${ref}` : ''}`
-      : undefined
+    // Construct the redirect URL for Supabase
+    // Supabase will append #access_token=... to this URL
+    const redirectUrl = `${productionSiteUrl}/auth?type=${type}${ref ? `&ref=${ref}` : ''}`
+    
+    // Log for debugging
+    console.log('URGENT FIX - Using production URL:', productionSiteUrl)
+    console.log('URGENT FIX - Redirect URL:', redirectUrl)
+    console.log('URGENT FIX - Current env var:', process.env.NEXT_PUBLIC_SITE_URL)
+    console.log('URGENT FIX - Window origin:', typeof window !== 'undefined' ? window.location.origin : 'undefined')
     
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -65,8 +70,11 @@ function AuthContent() {
         emailRedirectTo: redirectUrl,
       },
     })
-    if (error) setMsg('❌ ' + error.message)
-    else setMsg('✅ Magic link sent! Check your email.')
+    if (error) {
+      setMsg('❌ ' + error.message)
+    } else {
+      setMsg('✅ Magic link sent! Check your email.')
+    }
     setLoading(false)
   }
 
